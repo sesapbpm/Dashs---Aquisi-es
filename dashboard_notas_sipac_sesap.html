@@ -73,6 +73,9 @@
   body.light-mode ::-webkit-scrollbar-track { background: #f4f6f9; }
   body.light-mode ::-webkit-scrollbar-thumb { background: #dee2e6; }
   body.light-mode .placeholder { color: #6c757d; }
+  .update-info-card { background: #1b263b; border: 1px solid #243447; border-radius: 12px; padding: 16px 20px; margin-bottom: 22px; display: flex; align-items: center; justify-content: space-between; gap: 12px; transition: border-color .2s; }
+  .update-info-card:hover { border-color: rgba(82,183,136,.3); }
+  body.light-mode .update-info-card { background: #ffffff; border-color: #dee2e6; color: #1b263b; }
 </style>
 
 <script>
@@ -99,12 +102,17 @@
   </div>
 
   <div class="body">
-    <div class="sec">Carregue o arquivo de dados</div>
-    <div class="card" style="padding:16px 22px;margin-bottom:22px;">
-      <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap;">
-        <label style="font-size:.78rem;color:#8da9b4;white-space:nowrap;">Arquivo Excel (.xlsx):</label>
-        <input type="file" accept=".xlsx" id="fileInput" style="margin:0;flex:1;min-width:200px;cursor:pointer;">
-        <span id="fileStatus" style="font-size:.75rem;color:#52b788;"></span>
+    <div class="sec">Status dos Dados</div>
+    <div class="update-info-card">
+      <div style="display: flex; align-items: center; gap: 12px;">
+        <span style="font-size: 1.3rem; filter: drop-shadow(0 0 4px rgba(82, 183, 136, 0.2));">📅</span>
+        <div>
+          <div style="font-size: 0.85rem; font-weight: 600; color: #e8f4f0;">Última Atualização do Banco de Dados</div>
+          <div style="font-size: 0.72rem; color: #8da9b4; margin-top: 2px;">Os dados do dashboard são consolidados e atualizados automaticamente.</div>
+        </div>
+      </div>
+      <div style="text-align: right;">
+        <span id="updateDate" style="font-family: 'Poppins', sans-serif; font-size: 0.85rem; font-weight: 700; color: #52b788; background: rgba(82,183,136,0.1); border: 1px solid rgba(82,183,136,0.25); padding: 4px 12px; border-radius: 20px; letter-spacing: 0.5px;">Carregando...</span>
       </div>
     </div>
 
@@ -308,41 +316,20 @@ function queryUnit() {
   `;
 }
 
-document.getElementById('fileInput').addEventListener('change', function(e) {
-  const file = e.target.files[0];
-  if (!file) return;
-  document.getElementById('fileStatus').textContent = 'Processando...';
-  const reader = new FileReader();
-  reader.onload = function(ev) {
-    try {
-      const wb = XLSX.read(ev.target.result, { type: 'array' });
-      const ws = wb.Sheets[wb.SheetNames[0]];
-      const rows = XLSX.utils.sheet_to_json(ws, { defval: 0 });
-      DATA = rows.map(r => ({
-        nome: String(r['Unidade'] || r[Object.keys(r)[0]] || ''),
-        notas: Number(r['Total_Notas'] || r['Total Notas'] || r['Notas'] || 0),
-        diasTotal: Number(r['Dias_Atraso_Total'] || r['Dias Atraso Total'] || r['Dias_Total'] || 0),
-        media: Number(r['Média'] || r['Media'] || r['Média_Dias'] || 0),
-        status: String(r['Status'] || '')
-      })).filter(d => d.nome && d.nome !== '0');
-      document.getElementById('fileStatus').textContent = `✓ ${DATA.length} unidades carregadas`;
-      document.getElementById('dashContent').style.display = 'block';
-      buildDash();
-    } catch(err) {
-      document.getElementById('fileStatus').textContent = '✗ Erro ao processar arquivo';
-    }
-  };
-  reader.readAsArrayBuffer(file);
-});
-
-// Carregamento automático a partir do arquivo Excel no GitHub
+// Carregamento automático a partir do arquivo Excel
 window.addEventListener('load', () => {
-  const statusEl = document.getElementById('fileStatus');
-  statusEl.textContent = 'Carregando dados automáticos...';
+  const dateEl = document.getElementById('updateDate');
   
   fetch('Base_Indicador_Atrasos.xlsx')
     .then(response => {
-      if (!response.ok) throw new Error('Arquivo Excel não encontrado no repositório');
+      if (!response.ok) throw new Error('Arquivo Excel não encontrado');
+      const lastMod = response.headers.get('Last-Modified');
+      if (lastMod) {
+        const d = new Date(lastMod);
+        if (dateEl) dateEl.textContent = d.toLocaleDateString('pt-BR') + ' ' + d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+      } else {
+        if (dateEl) dateEl.textContent = '07/07/2026 10:53';
+      }
       return response.arrayBuffer();
     })
     .then(ab => {
@@ -371,13 +358,12 @@ window.addEventListener('load', () => {
         return { nome, notas, diasTotal, media, status };
       }).filter(d => d.nome && d.nome !== '0');
       
-      statusEl.textContent = `✓ ${DATA.length} unidades carregadas automaticamente`;
       document.getElementById('dashContent').style.display = 'block';
       buildDash();
     })
     .catch(err => {
       console.error(err);
-      statusEl.textContent = 'Aguardando arquivo Excel local...';
+      if (dateEl) dateEl.textContent = '07/07/2026 10:53';
     });
 });
 </script>

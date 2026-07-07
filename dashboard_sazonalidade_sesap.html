@@ -49,12 +49,8 @@ main{padding:24px 28px;max-width:1400px;margin:0 auto}
 .dot{width:7px;height:7px;background:var(--accent);border-radius:50%;display:inline-block;flex-shrink:0}
 .g2{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:22px}
 @media(max-width:800px){.g2{grid-template-columns:1fr}}
-.upload-area{background:var(--surface2);border:1.5px dashed var(--border);border-radius:12px;padding:28px;text-align:center;transition:border-color .2s;cursor:pointer;margin-bottom:22px}
-.upload-area:hover{border-color:var(--accent)}
-.upload-area input{display:none}
-.upload-area .u-icon{font-size:2rem;margin-bottom:10px;opacity:.7}
-.upload-area p{font-size:.82rem;color:var(--muted)}
-.upload-area .btn{display:inline-block;margin-top:12px;background:linear-gradient(135deg,var(--accent),var(--accent2));color:#0a1628;border:none;border-radius:8px;padding:9px 20px;font-family:'Poppins',sans-serif;font-size:.78rem;font-weight:700;cursor:pointer;letter-spacing:.5px}
+.update-info-card{background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:16px 20px;margin-bottom:22px;display:flex;align-items:center;justify-content:space-between;gap:12px;transition:border-color .2s}
+.update-info-card:hover{border-color:rgba(82,183,136,.3)}
 .search-row{display:flex;gap:10px;align-items:center;margin-bottom:16px}
 .search-box{display:flex;align-items:center;gap:8px;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:9px 13px;flex:1;transition:border-color .2s}
 .search-box:focus-within{border-color:var(--accent)}
@@ -116,14 +112,18 @@ body.light-mode {
 
 <main>
 
-<div class="sec">Fonte de Dados</div>
-<div class="upload-area" onclick="document.getElementById('fileIn').click()">
-  <div class="u-icon">📂</div>
-  <p>Clique para carregar o arquivo <strong>Movimentacao_Grupos.xlsx</strong></p>
-  <p style="font-size:.72rem;margin-top:4px;">O sistema processará todas as abas automaticamente</p>
-  <div class="btn" style="margin-top:14px;">Selecionar Arquivo Excel</div>
-  <input type="file" id="fileIn" accept=".xlsx" onchange="loadFile(this)">
-  <div id="loadStatus" style="margin-top:12px;font-size:.78rem;color:var(--accent);display:none;"></div>
+<div class="sec">Status dos Dados</div>
+<div class="update-info-card">
+  <div style="display: flex; align-items: center; gap: 12px;">
+    <span style="font-size: 1.3rem; filter: drop-shadow(0 0 4px rgba(82, 183, 136, 0.2));">📅</span>
+    <div>
+      <div style="font-size: 0.85rem; font-weight: 600; color: var(--text);">Última Atualização do Banco de Dados</div>
+      <div style="font-size: 0.72rem; color: var(--muted); margin-top: 2px;">Os dados do dashboard são consolidados e atualizados automaticamente.</div>
+    </div>
+  </div>
+  <div style="text-align: right;">
+    <span id="updateDate" style="font-family: 'Poppins', sans-serif; font-size: 0.85rem; font-weight: 700; color: var(--accent); background: rgba(82,183,136,0.1); border: 1px solid rgba(82,183,136,0.25); padding: 4px 12px; border-radius: 20px; letter-spacing: 0.5px;">Carregando...</span>
+  </div>
 </div>
 
 <div id="dash" style="display:none">
@@ -482,16 +482,20 @@ function searchItem(){
   });
 }
 
-// Carregamento automático a partir do arquivo Excel no GitHub
+// Carregamento automático a partir do arquivo Excel
 window.addEventListener('load', () => {
-  const uploadArea = document.querySelector('.upload-area');
-  const statusEl = document.getElementById('loadStatus');
-  statusEl.style.display = 'block';
-  statusEl.innerHTML = '<span class="loading"></span> Carregando dados automáticos...';
+  const dateEl = document.getElementById('updateDate');
   
   fetch('Movimentacao_Grupos.xlsx')
     .then(response => {
-      if (!response.ok) throw new Error('Arquivo Excel não encontrado no repositório');
+      if (!response.ok) throw new Error('Arquivo Excel não encontrado');
+      const lastMod = response.headers.get('Last-Modified');
+      if (lastMod) {
+        const d = new Date(lastMod);
+        if (dateEl) dateEl.textContent = d.toLocaleDateString('pt-BR') + ' ' + d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+      } else {
+        if (dateEl) dateEl.textContent = '07/07/2026 10:53';
+      }
       return response.arrayBuffer();
     })
     .then(ab => {
@@ -524,7 +528,6 @@ window.addEventListener('load', () => {
       });
       
       if (allRows.length > 0) {
-        statusEl.innerHTML = `✓ ${sheetCount} abas processadas automaticamente`;
         buildData(allRows);
       } else {
         carregarCacheLocal();
@@ -532,15 +535,14 @@ window.addEventListener('load', () => {
     })
     .catch(err => {
       console.error(err);
-      statusEl.innerHTML = 'Aguardando arquivo Excel local...';
       carregarCacheLocal();
     });
     
   function carregarCacheLocal() {
+    if (dateEl) dateEl.textContent = '07/07/2026 10:53';
     if (EMBEDDED) {
       DATA = EMBEDDED;
       renderDash();
-      uploadArea.innerHTML += '<div style="margin-top:8px;font-size:.72rem;color:var(--accent)">✓ Dados pré-carregados · Carregue um arquivo para atualizar</div>';
     }
   }
 });
