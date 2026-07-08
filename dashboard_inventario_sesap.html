@@ -345,6 +345,79 @@ body.light-mode #loading {
 body.light-mode .insight-list .name {
   color: var(--text);
 }
+.data-status {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 12px 18px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 22px;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+body.light-mode .data-status {
+  background: #ffffff;
+  border-color: #dee2e6;
+  color: #495057;
+}
+.data-status strong {
+  color: var(--text);
+}
+body.light-mode .data-status strong {
+  color: #1b263b;
+}
+.status-tag {
+  background: rgba(82, 183, 136, 0.1);
+  border: 1px solid rgba(82, 183, 136, 0.2);
+  color: var(--accent);
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-weight: 600;
+  font-size: 0.72rem;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+body.light-mode .status-tag {
+  color: #40916c;
+}
+.status-tag.loading-state {
+  color: var(--warn);
+  background: rgba(244, 162, 97, 0.1);
+  border-color: rgba(244, 162, 97, 0.2);
+}
+.status-tag.error-state {
+  color: var(--danger);
+  background: rgba(231, 111, 81, 0.1);
+  border-color: rgba(231, 111, 81, 0.2);
+}
+.loading {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border: 2px solid var(--border);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+body.light-mode .loading {
+  border-color: #dee2e6;
+  border-top-color: #40916c;
+}
+@media(max-width:600px){
+  .data-status {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+  .status-tag {
+    width: 100%;
+    justify-content: center;
+  }
+}
 </style>
 </head>
 <body>
@@ -376,6 +449,14 @@ body.light-mode .insight-list .name {
 </header>
 
 <main>
+
+  <div class="data-status">
+    <div style="display:flex;align-items:center;gap:8px;">
+      <span style="font-size:1rem;">🔄</span>
+      <span>Base de Dados: <strong>relatorio_inventario_CONSOLIDADO_MATRIZ.xlsx</strong> (GitHub)</span>
+    </div>
+    <div id="loadStatus" class="status-tag loading-state"><span class="loading"></span> Carregando...</div>
+  </div>
 
   <!-- KPIs -->
   <div class="section-title">Indicadores Gerais</div>
@@ -810,11 +891,24 @@ function buildCoverageChart() {
 window.addEventListener('load', () => {
   const loadingEl = document.getElementById('loading');
   const loaderTextEl = loadingEl.querySelector('.loader-text');
+  const statusEl = document.getElementById('loadStatus');
   loaderTextEl.textContent = 'Carregando inventário automático...';
   
+  let lastModifiedStr = '';
   fetch('relatorio_inventario_CONSOLIDADO_MATRIZ.xlsx')
     .then(response => {
       if (!response.ok) throw new Error('Arquivo Excel não encontrado no repositório');
+      
+      const lastMod = response.headers.get('Last-Modified');
+      if (lastMod) {
+        const d = new Date(lastMod);
+        lastModifiedStr = 'Atualizado em: ' + d.toLocaleString('pt-BR', {
+          day: '2-digit', month: '2-digit', year: 'numeric',
+          hour: '2-digit', minute: '2-digit'
+        });
+      } else {
+        lastModifiedStr = 'Sincronizado via GitHub';
+      }
       return response.arrayBuffer();
     })
     .then(ab => {
@@ -836,6 +930,10 @@ window.addEventListener('load', () => {
           RECORDS.push([codigo, nome, unidMedida, saldos]);
         }
         
+        if (statusEl) {
+          statusEl.className = 'status-tag';
+          statusEl.innerHTML = `✓ ${lastModifiedStr}`;
+        }
         inicializarDashboard();
       } else {
         loaderTextEl.textContent = 'Erro: Arquivo Excel de inventário vazio.';
@@ -844,6 +942,10 @@ window.addEventListener('load', () => {
     .catch(err => {
       console.error(err);
       loaderTextEl.textContent = 'Aguardando arquivo Excel local (relatorio_inventario_CONSOLIDADO_MATRIZ.xlsx)...';
+      if (statusEl) {
+        statusEl.className = 'status-tag error-state';
+        statusEl.innerHTML = '✗ Erro ao carregar dados';
+      }
     });
 
   function inicializarDashboard() {

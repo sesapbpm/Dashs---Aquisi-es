@@ -10,7 +10,11 @@
   .header-txt h1 { font-size: 1.1rem; font-weight: 700; color: #52b788; letter-spacing: .5px; }
   .header-txt p { font-size: .7rem; color: #8da9b4; letter-spacing: 1px; text-transform: uppercase; }
   .hbadge { margin-left: auto; background: rgba(231,111,81,.12); border: 1px solid rgba(231,111,81,.3); color: #f4a261; font-size: .68rem; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; padding: 5px 12px; border-radius: 20px; }
+  body.in-iframe .dash .header { display: none !important; }
+  body.in-iframe .dash { padding: 14px 0 32px !important; }
+  body.in-iframe h2.sr-only { display: none !important; }
   .body { padding: 24px 28px; max-width: 1300px; margin: 0 auto; }
+  .data-status-wrapper { }
   .sec { font-size: .65rem; font-weight: 700; letter-spacing: 2.5px; text-transform: uppercase; color: #52b788; margin-bottom: 12px; display: flex; align-items: center; gap: 10px; }
   .sec::after { content: ''; flex: 1; height: 1px; background: linear-gradient(to right, #243447, transparent); }
   .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 14px; margin-bottom: 28px; }
@@ -59,9 +63,15 @@
   .mini-bar { height: 6px; border-radius: 3px; }
   ::-webkit-scrollbar { width: 4px; } ::-webkit-scrollbar-track { background: #1b263b; } ::-webkit-scrollbar-thumb { background: #243447; border-radius: 2px; }
   .placeholder { color: #8da9b4; font-size: .82rem; font-style: italic; }
-  body.in-iframe .dash .header { display: none !important; }
-  body.in-iframe .dash { padding: 14px 0 32px !important; }
-  body.in-iframe h2.sr-only { display: none !important; }
+  div.body {
+  }
+  .body {
+    padding: 24px 28px;
+    max-width: 1300px;
+    margin: 0 auto;
+  }
+  /* data-status inside body */
+
   body.light-mode .dash { background: #f4f6f9; color: #1b263b; }
   body.light-mode .kpi, body.light-mode .card { background: #ffffff; border-color: #dee2e6; color: #1b263b; }
   body.light-mode .card h3 { color: #1b263b; }
@@ -73,9 +83,80 @@
   body.light-mode ::-webkit-scrollbar-track { background: #f4f6f9; }
   body.light-mode ::-webkit-scrollbar-thumb { background: #dee2e6; }
   body.light-mode .placeholder { color: #6c757d; }
-  .update-info-card { background: #1b263b; border: 1px solid #243447; border-radius: 12px; padding: 16px 20px; margin-bottom: 22px; display: flex; align-items: center; justify-content: space-between; gap: 12px; transition: border-color .2s; }
-  .update-info-card:hover { border-color: rgba(82,183,136,.3); }
-  body.light-mode .update-info-card { background: #ffffff; border-color: #dee2e6; color: #1b263b; }
+  .data-status {
+    background: #162032;
+    border: 1px solid #243447;
+    border-radius: 12px;
+    padding: 12px 18px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 22px;
+    font-size: 0.8rem;
+    color: #8da9b4;
+  }
+  body.light-mode .data-status {
+    background: #ffffff;
+    border-color: #dee2e6;
+    color: #495057;
+  }
+  .data-status strong {
+    color: #e8f4f0;
+  }
+  body.light-mode .data-status strong {
+    color: #1b263b;
+  }
+  .status-tag {
+    background: rgba(82, 183, 136, 0.1);
+    border: 1px solid rgba(82, 183, 136, 0.2);
+    color: #52b788;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-weight: 600;
+    font-size: 0.72rem;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  body.light-mode .status-tag {
+    color: #40916c;
+  }
+  .status-tag.loading-state {
+    color: #f4a261;
+    background: rgba(244, 162, 97, 0.1);
+    border-color: rgba(244, 162, 97, 0.2);
+  }
+  .status-tag.error-state {
+    color: #e76f51;
+    background: rgba(231, 111, 81, 0.1);
+    border-color: rgba(231, 111, 81, 0.2);
+  }
+  .loading {
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    border: 2px solid #243447;
+    border-top-color: #52b788;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+  body.light-mode .loading {
+    border-color: #dee2e6;
+    border-top-color: #40916c;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  @media(max-width:600px){
+    .data-status {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 8px;
+    }
+    .status-tag {
+      width: 100%;
+      justify-content: center;
+    }
+  }
 </style>
 
 <script>
@@ -102,18 +183,12 @@
   </div>
 
   <div class="body">
-    <div class="sec">Status dos Dados</div>
-    <div class="update-info-card">
-      <div style="display: flex; align-items: center; gap: 12px;">
-        <span style="font-size: 1.3rem; filter: drop-shadow(0 0 4px rgba(82, 183, 136, 0.2));">📅</span>
-        <div>
-          <div style="font-size: 0.85rem; font-weight: 600; color: #e8f4f0;">Última Atualização do Banco de Dados</div>
-          <div style="font-size: 0.72rem; color: #8da9b4; margin-top: 2px;">Os dados do dashboard são consolidados e atualizados automaticamente.</div>
-        </div>
+    <div class="data-status">
+      <div style="display:flex;align-items:center;gap:8px;">
+        <span style="font-size:1rem;">🔄</span>
+        <span>Base de Dados: <strong>Base_Indicador_Atrasos.xlsx</strong> (GitHub)</span>
       </div>
-      <div style="text-align: right;">
-        <span id="updateDate" style="font-family: 'Poppins', sans-serif; font-size: 0.85rem; font-weight: 700; color: #52b788; background: rgba(82,183,136,0.1); border: 1px solid rgba(82,183,136,0.25); padding: 4px 12px; border-radius: 20px; letter-spacing: 0.5px;">Carregando...</span>
-      </div>
+      <div id="fileStatus" class="status-tag loading-state"><span class="loading"></span> Carregando...</div>
     </div>
 
     <div id="dashContent" style="display:none;">
@@ -316,19 +391,26 @@ function queryUnit() {
   `;
 }
 
-// Carregamento automático a partir do arquivo Excel
+// Carregamento automático a partir do arquivo Excel no GitHub
 window.addEventListener('load', () => {
-  const dateEl = document.getElementById('updateDate');
+  const statusEl = document.getElementById('fileStatus');
+  statusEl.className = 'status-tag loading-state';
+  statusEl.innerHTML = '<span class="loading"></span> Carregando dados automáticos...';
   
+  let lastModifiedStr = '';
   fetch('Base_Indicador_Atrasos.xlsx')
     .then(response => {
-      if (!response.ok) throw new Error('Arquivo Excel não encontrado');
+      if (!response.ok) throw new Error('Arquivo Excel não encontrado no repositório');
+      
       const lastMod = response.headers.get('Last-Modified');
       if (lastMod) {
         const d = new Date(lastMod);
-        if (dateEl) dateEl.textContent = d.toLocaleDateString('pt-BR') + ' ' + d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+        lastModifiedStr = 'Atualizado em: ' + d.toLocaleString('pt-BR', {
+          day: '2-digit', month: '2-digit', year: 'numeric',
+          hour: '2-digit', minute: '2-digit'
+        });
       } else {
-        if (dateEl) dateEl.textContent = '07/07/2026 10:53';
+        lastModifiedStr = 'Sincronizado via GitHub';
       }
       return response.arrayBuffer();
     })
@@ -358,12 +440,15 @@ window.addEventListener('load', () => {
         return { nome, notas, diasTotal, media, status };
       }).filter(d => d.nome && d.nome !== '0');
       
+      statusEl.className = 'status-tag';
+      statusEl.innerHTML = `✓ ${lastModifiedStr}`;
       document.getElementById('dashContent').style.display = 'block';
       buildDash();
     })
     .catch(err => {
       console.error(err);
-      if (dateEl) dateEl.textContent = '07/07/2026 10:53';
+      statusEl.className = 'status-tag error-state';
+      statusEl.innerHTML = '✗ Erro ao carregar dados';
     });
 });
 </script>
